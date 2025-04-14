@@ -49,7 +49,7 @@ function App() {
               
               {/* Agent Routes */}
               <Route path="/agents" element={<AgentsList projectId={projectId} region={region} />} />
-              <Route path="/agents/:agentId" element={<AgentDetails projectId={projectId} region={region} />} />
+              //<Route path="/agents/:agentId" element={<AgentDetails projectId={projectId} region={region} />} />
               
               {/* Deployment Routes */}
               <Route path="/deployments" element={<DeploymentsList projectId={projectId} region={region} />} />
