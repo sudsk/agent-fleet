@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Database, Search, InfoCircle, ExternalLink, AlertTriangle } from 'lucide-react';
+import { Database, Search, Info, ExternalLink, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 
 const DeploymentsList = ({ projectId, region }) => {
@@ -131,7 +131,7 @@ const DeploymentsList = ({ projectId, region }) => {
               <p className="text-gray-500">No deployments found matching "{searchTerm}"</p>
             ) : (
               <>
-                <InfoCircle className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                <Info className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                 <p className="mb-4 text-gray-600">No deployments found in this project.</p>
                 <Link
                   to="/agents"
