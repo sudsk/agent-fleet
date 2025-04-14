@@ -4,7 +4,7 @@ import AppHeader from './components/layout/AppHeader';
 import AppSidebar from './components/layout/AppSidebar';
 import Dashboard from './pages/Dashboard';
 import AgentsList from './pages/agents/AgentsList';
-import AgentDetails from './pages/agents/AgentDetails';
+// import AgentDetails from './pages/agents/AgentDetails';
 import DeploymentsList from './pages/deployments/DeploymentsList';
 import Playground from './pages/playground/Playground';
 import TemplateGallery from './pages/templates/TemplateGallery';
