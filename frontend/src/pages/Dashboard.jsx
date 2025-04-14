@@ -317,3 +317,5 @@ const Dashboard = ({ projectId, region }) => {
     </div>
   );
 };
+
+export default Dashboard;
