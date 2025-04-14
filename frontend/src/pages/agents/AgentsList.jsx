@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cpu, Search, Plus, MoreHorizontal, Play, Trash2, InfoCircle, AlertTriangle } from 'lucide-react';
+import { Cpu, Search, Plus, MoreHorizontal, Play, Trash2, Info, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
 
 const AgentsList = ({ projectId, region }) => {
@@ -144,7 +144,7 @@ const AgentsList = ({ projectId, region }) => {
               <p className="text-gray-500">No agents found matching "{searchTerm}"</p>
             ) : (
               <>
-                <InfoCircle className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+                <Info className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                 <p className="mb-4 text-gray-600">No agents found in this project.</p>
                 <button
                   onClick={() => navigate('/agents/create')}
