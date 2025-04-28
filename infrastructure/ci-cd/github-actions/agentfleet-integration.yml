@@ -1,0 +1,72 @@
+name: AgentFleet Integration
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-and-register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      
+      # Build and deploy agent (simplified example)
+      - name: Build and deploy to Cloud Run
+        id: deploy
+        run: |
+          # Build the container
+          gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/my-agent:${{ github.sha }}
+          
+          # Deploy to Cloud Run
+          gcloud run deploy my-agent \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/my-agent:${{ github.sha }} \
+            --platform managed \
+            --region ${{ secrets.GCP_REGION }} \
+            --allow-unauthenticated
+          
+          # Get the service URL
+          SERVICE_URL=$(gcloud run services describe my-agent --platform managed --region ${{ secrets.GCP_REGION }} --format="value(status.url)")
+          echo "SERVICE_URL=${SERVICE_URL}" >> $GITHUB_ENV
+      
+      # Install and use AgentFleet CLI
+      - name: Register with AgentFleet
+        run: |
+          # Install AgentFleet CLI
+          pip install git+https://github.com/sudsk/agent-fleet.git#subdirectory=agentfleet-cli
+          
+          # Register the agent
+          agentfleet register \
+            --name "my-agent-${{ github.repository_owner }}" \
+            --description "Agent deployed from GitHub Actions" \
+            --repo-url "https://github.com/${{ github.repository }}" \
+            --commit "${{ github.sha }}" \
+            --environment "DEVELOPMENT" \
+            --project-id "${{ secrets.GCP_PROJECT_ID }}" \
+            --region "${{ secrets.GCP_REGION }}" \
+            --deployment-type "CLOUD_RUN" \
+            --resource-name "my-agent" \
+            --endpoint-url "${{ env.SERVICE_URL }}" \
+            --api-url "${{ secrets.AGENTFLEET_API_URL }}" \
+            --api-key "${{ secrets.AGENTFLEET_API_KEY }}" \
+            --detect-framework \
+            --verbose
+          
+          echo "Agent successfully registered with AgentFleet!"
