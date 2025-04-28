@@ -1,0 +1,105 @@
+# AgentFleet Integration for Agent Starter Pack CI/CD Pipeline
+# 
+# This sample Cloud Build configuration shows how to integrate
+# the AgentFleet CLI with the Agent Starter Pack CI/CD pipelines.
+
+steps:
+  # Install the AgentFleet CLI
+  - name: "python:3.11-slim"
+    id: install-agentfleet-cli
+    entrypoint: /bin/bash
+    args:
+      - "-c"
+      - |
+        pip install git+https://github.com/sudsk/agent-fleet.git#subdirectory=agentfleet-cli
+        agentfleet --version
+    env:
+      - 'PATH=/usr/local/bin:/usr/bin:~/.local/bin'
+        
+  # Register agent with AgentFleet after deployment to staging
+  - name: "python:3.11-slim"
+    id: register-with-agentfleet
+    entrypoint: /bin/bash
+    waitFor: ['deploy-staging', 'fetch-staging-url']  # Ensure deployment is complete
+    args:
+      - "-c"
+      - |
+        # Read the staging URL from the previous step
+        export ENDPOINT_URL=$(cat staging_url.txt)
+        
+        # Get Git information
+        export REPO_URL=https://github.com/${REPO_NAME}
+        export COMMIT_SHA=${COMMIT_SHA}
+        
+        # Register the agent with AgentFleet
+        agentfleet register \
+          --name "my-awesome-agent" \
+          --description "Agent deployed with Agent Starter Pack" \
+          --detect-framework \
+          --repo-url ${REPO_URL} \
+          --commit ${COMMIT_SHA} \
+          --environment DEVELOPMENT \
+          --project-id ${_STAGING_PROJECT_ID} \
+          --region ${_REGION} \
+          --deployment-type CLOUD_RUN \
+          --version "1.0.0" \
+          --resource-name "my-awesome-agent" \
+          --endpoint-url ${ENDPOINT_URL} \
+          --api-url ${_AGENTFLEET_API_URL} \
+          --api-key ${_AGENTFLEET_API_KEY} \
+          --verbose
+    env:
+      - 'PATH=/usr/local/bin:/usr/bin:~/.local/bin'
+
+  # Register agent with AgentFleet after deployment to production
+  - name: "python:3.11-slim"
+    id: register-with-agentfleet-prod
+    entrypoint: /bin/bash
+    waitFor: ['trigger-prod-deployment']  # Wait for production deployment to start
+    args:
+      - "-c"
+      - |
+        # Wait for production deployment to complete (simplified)
+        # In a real implementation, you would poll the deployment status
+        echo "Waiting for production deployment to complete..."
+        sleep 120  # This is just a placeholder
+        
+        # Get the production service URL
+        PROD_URL=$(gcloud run services describe my-awesome-agent \
+          --region ${_REGION} --project ${_PROD_PROJECT_ID} --format="value(status.url)")
+          
+        # Get Git information
+        export REPO_URL=https://github.com/${REPO_NAME}
+        export COMMIT_SHA=${COMMIT_SHA}
+        
+        # Register the agent with AgentFleet
+        agentfleet register \
+          --name "my-awesome-agent" \
+          --description "Agent deployed with Agent Starter Pack" \
+          --detect-framework \
+          --repo-url ${REPO_URL} \
+          --commit ${COMMIT_SHA} \
+          --environment PRODUCTION \
+          --project-id ${_PROD_PROJECT_ID} \
+          --region ${_REGION} \
+          --deployment-type CLOUD_RUN \
+          --version "1.0.0" \
+          --resource-name "my-awesome-agent" \
+          --endpoint-url ${PROD_URL} \
+          --api-url ${_AGENTFLEET_API_URL} \
+          --api-key ${_AGENTFLEET_API_KEY} \
+          --verbose
+    env:
+      - 'PATH=/usr/local/bin:/usr/bin:~/.local/bin'
+
+substitutions:
+  _STAGING_PROJECT_ID: YOUR_STAGING_PROJECT_ID
+  _PROD_PROJECT_ID: YOUR_PROD_PROJECT_ID
+  _REGION: us-central1
+  _AGENTFLEET_API_URL: https://your-agentfleet-instance.com/api
+  _AGENTFLEET_API_KEY: ${_SECRET_AGENTFLEET_API_KEY}  # Reference to Secret Manager
+
+availableSecrets:
+  secretManager:
+  - versionName: projects/${PROJECT_ID}/secrets/agentfleet-api-key/versions/latest
+    env: _SECRET_AGENTFLEET_API_KEY
