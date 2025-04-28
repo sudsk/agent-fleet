@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Cpu, Search, Plus, MoreHorizontal, Play, Trash2, Info, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../../components/common/StatusBadge';
+import apiService from '../../services/apiService';
 
 const AgentsList = ({ projectId, region }) => {
   const navigate = useNavigate();
@@ -21,57 +22,13 @@ const AgentsList = ({ projectId, region }) => {
       setIsLoading(true);
       
       try {
-        // In a real implementation, this would be an API call
-        // Simulate API response
-        setTimeout(() => {
-          const mockAgents = [
-            {
-              id: 'agent-1',
-              name: 'Customer Service Bot',
-              description: 'Handles common customer inquiries and requests',
-              framework: 'LANGGRAPH',
-              status: 'DEPLOYED',
-              environment: 'DEVELOPMENT',
-              createdAt: '2025-04-01T10:00:00Z',
-              updatedAt: '2025-04-10T12:00:00Z'
-            },
-            {
-              id: 'agent-2',
-              name: 'Document Retrieval Agent',
-              description: 'Answers questions based on internal documentation',
-              framework: 'LANGCHAIN',
-              status: 'TESTED',
-              environment: 'DEVELOPMENT',
-              createdAt: '2025-04-02T15:30:00Z',
-              updatedAt: '2025-04-09T15:30:00Z'
-            },
-            {
-              id: 'agent-3',
-              name: 'Sales Assistant',
-              description: 'Helps with product recommendations',
-              framework: 'CREWAI',
-              status: 'DRAFT',
-              environment: 'DEVELOPMENT',
-              createdAt: '2025-04-05T09:15:00Z',
-              updatedAt: '2025-04-08T09:15:00Z'
-            },
-            {
-              id: 'agent-4',
-              name: 'Product Recommendation',
-              description: 'Provides personalized product recommendations',
-              framework: 'CUSTOM',
-              status: 'FAILED',
-              environment: 'DEVELOPMENT',
-              createdAt: '2025-04-03T11:45:00Z',
-              updatedAt: '2025-04-09T14:20:00Z'
-            }
-          ];
-          
-          setAgents(mockAgents);
-          setIsLoading(false);
-        }, 1000);
+        // Call the API to fetch the real agents data
+        const response = await apiService.fetchAgents(projectId, region);
+        setAgents(response || []);
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching agents:', error);
+        setError('Failed to fetch agents. Please try again later.');
         setIsLoading(false);
       }
     };
@@ -80,9 +37,20 @@ const AgentsList = ({ projectId, region }) => {
   }, [projectId, region]);
   
   const handleDeleteAgent = (agentId) => {
-    // In a real implementation, this would be an API call
-    setAgents(agents.filter(agent => agent.id !== agentId));
-    setDeleteConfirmation(null);
+    try {
+      setIsLoading(true);
+      // Call the API to delete the agent
+      await apiService.deleteAgent(projectId, region, agentId);
+      
+      // Remove the agent from the local state
+      setAgents(agents.filter(agent => agent.id !== agentId));
+      setDeleteConfirmation(null);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error deleting agent:', error);
+      setError('Failed to delete agent. Please try again later.');
+      setIsLoading(false);
+    }
   };
   
   const filteredAgents = agents.filter(agent => 
