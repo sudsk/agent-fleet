@@ -36,7 +36,7 @@ const AgentsList = ({ projectId, region }) => {
     fetchAgents();
   }, [projectId, region]);
   
-  const handleDeleteAgent = (agentId) => {
+  const handleDeleteAgent = async (agentId) => {
     try {
       setIsLoading(true);
       // Call the API to delete the agent
