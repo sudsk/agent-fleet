@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Cpu, PlayCircle, LayoutTemplate, Database, ArrowRight, AlertTriangle } from 'lucide-react';
 import StatusBadge from '../components/common/StatusBadge';
+import apiService from '../services/apiService';
 
 const Dashboard = ({ projectId, region }) => {
   const [agentStats, setAgentStats] = useState({
@@ -16,7 +17,7 @@ const Dashboard = ({ projectId, region }) => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    // Simulated API calls for demo purposes
+    // Fetch dashboard data from APIs
     const fetchDashboardData = async () => {
       if (!projectId) {
         setIsLoading(false);
@@ -24,65 +25,46 @@ const Dashboard = ({ projectId, region }) => {
       }
       
       setIsLoading(true);
+      setError(null);
       
       try {
-        // In a real implementation, this would be API calls
+        // Fetch agents
+        const agents = await apiService.fetchAgents(projectId, region);
         
-        // Simulate agent stats
-        setAgentStats({
-          total: 12,
-          deployed: 5,
-          tested: 3,
-          draft: 4
-        });
+        // Calculate stats
+        if (agents && agents.length > 0) {
+          const stats = {
+            total: agents.length,
+            deployed: agents.filter(agent => agent.status === 'DEPLOYED').length,
+            tested: agents.filter(agent => agent.status === 'TESTED').length,
+            draft: agents.filter(agent => agent.status === 'DRAFT').length
+          };
+          setAgentStats(stats);
         
-        // Simulate recent agents
-        setRecentAgents([
-          {
-            id: 'agent-1',
-            name: 'Customer Service Bot',
-            status: 'DEPLOYED',
-            framework: 'LANGGRAPH',
-            updatedAt: '2025-04-10T12:00:00Z'
-          },
-          {
-            id: 'agent-2',
-            name: 'Document Retrieval Agent',
-            status: 'TESTED',
-            framework: 'LANGCHAIN',
-            updatedAt: '2025-04-09T15:30:00Z'
-          },
-          {
-            id: 'agent-3',
-            name: 'Sales Assistant',
-            status: 'DRAFT',
-            framework: 'CREWAI',
-            updatedAt: '2025-04-08T09:15:00Z'
-          }
-        ]);
+          // Sort by updatedAt for recent agents
+          const sortedAgents = [...agents].sort((a, b) => 
+            new Date(b.updatedAt) - new Date(a.updatedAt)
+          );
+          
+          setRecentAgents(sortedAgents.slice(0, 3));
+        }
         
-        // Simulate recent deployments
-        setRecentDeployments([
-          {
-            id: 'deploy-1',
-            agentId: 'agent-1',
-            agentName: 'Customer Service Bot',
-            status: 'SUCCESSFUL',
-            deploymentType: 'AGENT_ENGINE',
-            deployedAt: '2025-04-10T12:00:00Z'
-          },
-          {
-            id: 'deploy-2',
-            agentId: 'agent-4',
-            agentName: 'Product Recommendation',
-            status: 'FAILED',
-            deploymentType: 'CLOUD_RUN',
-            deployedAt: '2025-04-09T14:20:00Z'
-          }
-        ]);
+        // Fetch deployments
+        const deployments = await apiService.fetchDeployments(projectId, region);
+        
+        if (deployments && deployments.length > 0) {
+          // Sort by deployedAt for recent deployments
+          const sortedDeployments = [...deployments].sort((a, b) => 
+            new Date(b.deployedAt) - new Date(a.deployedAt)
+          );
+          
+          setRecentDeployments(sortedDeployments.slice(0, 3));
+        }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-      } finally {
+        setError('Failed to load dashboard data. Please try again later.');
         setIsLoading(false);
       }
     };
