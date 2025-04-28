@@ -15,6 +15,7 @@ const Dashboard = ({ projectId, region }) => {
   const [recentAgents, setRecentAgents] = useState([]);
   const [recentDeployments, setRecentDeployments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     // Fetch dashboard data from APIs
