@@ -11,6 +11,7 @@ const AgentsList = ({ projectId, region }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [error, setError] = useState(null);
   
   useEffect(() => {
     const fetchAgents = async () => {
